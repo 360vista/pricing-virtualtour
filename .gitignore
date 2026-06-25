@@ -1,1 +1,6 @@
+# macOS Finder metadata
 .DS_Store
+._*
+
+# Cloudflare local dev/cache state
+.wrangler/
