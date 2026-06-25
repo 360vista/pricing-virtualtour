@@ -1,0 +1,2363 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Preisübersicht - 2026</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;900&display=swap"
+    />
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <!-- Export to PDF: html2canvas + jsPDF -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+    <style>
+      :root {
+        --bg: #0b0d12;
+        --panel: #111523;
+        --panel2: #0f1320;
+        --border: rgba(255, 255, 255, 0.08);
+        --text: #f4f6fb;
+        --muted: rgba(244, 246, 251, 0.74);
+        --accent: #814ac8;
+        --accent2: #6cfbff;
+        --good: #7cffb2;
+        --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        background: #000;
+        color: var(--text);
+        font-family: "Space Grotesk", ui-sans-serif, system-ui, -apple-system,
+          Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
+          "Segoe UI Emoji";
+        letter-spacing: 0.2px;
+      }
+
+      .wrap {
+        max-width: 1180px;
+        margin: 36px auto 42px;
+        padding: 0 16px 40px;
+      }
+
+      .top {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+
+      .title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 30px;
+        line-height: 1.1;
+        font-weight: 900;
+        letter-spacing: 0.4px;
+        display: inline-block;
+      }
+
+      .logo {
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 20px;
+        line-height: 1.2;
+        font-weight: 900;
+        letter-spacing: 0.2px;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        font-weight: 700;
+        font-size: 13px;
+        background: rgba(0, 0, 0, 0.32);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 6px 10px;
+        border-radius: 14px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        justify-content: flex-end;
+        background: rgba(145, 9, 150, 0.878);
+        padding: 10px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        box-shadow: 0 18px 35px rgba(0, 0, 0, 0.35);
+      }
+
+      .pill {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .pill label {
+        font-weight: 900;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .pill input {
+        width: 140px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(0, 0, 0, 0.25);
+        color: var(--text);
+        border-radius: 999px;
+        padding: 10px 12px;
+        font-weight: 900;
+        outline: none;
+      }
+
+      .pill input:focus {
+        border-color: rgba(129, 74, 200, 0.6);
+        box-shadow: 0 0 0 4px rgba(129, 74, 200, 0.12);
+      }
+
+      .btn {
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: linear-gradient(
+          180deg,
+          rgba(129, 74, 200, 0.22),
+          rgba(129, 74, 200, 0.06)
+        );
+        color: var(--text);
+        font-weight: 900;
+        padding: 11px 14px;
+        border-radius: 999px;
+        cursor: pointer;
+        box-shadow: var(--shadow);
+        transition: transform 0.08s ease, border-color 0.2s ease;
+        letter-spacing: 0.3px;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(129, 74, 200, 0.55);
+      }
+      .btn:active {
+        transform: translateY(0px);
+      }
+
+      .panel {
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: linear-gradient(145deg, #12172a, #0f1220);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: relative;
+        isolation: isolate;
+      }
+
+      /* This is the area that gets exported to PDF */
+      #exportArea {
+        padding: 18px 18px 16px;
+        background: #0b0d12;
+        backdrop-filter: blur(4px);
+      }
+
+      .summary {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 10px;
+      }
+
+      .card {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: #111522;
+        border-radius: 16px;
+        padding: 12px;
+        min-height: 72px;
+      }
+
+      .card.highlight {
+        border-color: rgba(129, 74, 200, 0.6);
+        box-shadow: 0 12px 35px rgba(129, 74, 200, 0.18);
+        background: linear-gradient(
+          165deg,
+          rgba(129, 74, 200, 0.18),
+          rgba(129, 74, 200, 0.07)
+        );
+      }
+
+      .card.hosting-highlight {
+        border-color: rgba(0, 122, 255, 0.8);
+        box-shadow: 0 12px 35px rgba(0, 122, 255, 0.25);
+        background: linear-gradient(
+          165deg,
+          rgba(0, 122, 255, 0.22),
+          rgba(0, 122, 255, 0.08)
+        );
+      }
+
+      .accountCard {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+      }
+
+      .accountLabel {
+        display: grid;
+        gap: 6px;
+      }
+
+      .accountLabel .k {
+        margin: 0;
+      }
+
+      .accountValue {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 900;
+      }
+
+      .accountValue .valueText {
+        font-size: 18px;
+      }
+
+      .copyBtn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text);
+        cursor: pointer;
+        transition: border-color 0.15s ease, transform 0.08s ease;
+      }
+
+      .copyBtn:hover {
+        border-color: rgba(255, 255, 255, 0.35);
+        transform: translateY(-1px);
+      }
+
+      .copyBtn:active {
+        transform: translateY(0);
+      }
+
+      .toast {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        background: rgba(0, 0, 0, 0.9);
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        font-weight: 800;
+        font-size: 13px;
+        opacity: 0;
+        transform: translateY(8px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        pointer-events: none;
+        z-index: 9999;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .summaryTable {
+        display: grid;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 12px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.28);
+      }
+
+      .summaryRow {
+        display: grid;
+        grid-template-columns: 1.2fr 0.7fr 40px;
+        align-items: center;
+        padding: 10px 12px;
+        gap: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .summaryRow:last-child {
+        border-bottom: none;
+      }
+
+      .summaryLabel {
+        display: grid;
+        gap: 2px;
+      }
+
+      .summaryValue {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 4px;
+        font-weight: 900;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+      }
+
+      .summaryRow.highlight {
+        background: rgba(129, 74, 200, 0.08);
+        border-color: rgba(129, 74, 200, 0.3);
+      }
+
+      .summaryRow.breakdown {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .summaryRow.hosting-highlight {
+        background: rgba(0, 122, 255, 0.1);
+        border-color: rgba(0, 122, 255, 0.35);
+      }
+
+      .card .k {
+        font-weight: 900;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 6px;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+      }
+
+      .card .v {
+        font-weight: 950;
+        font-size: 18px;
+        line-height: 1.1;
+      }
+
+      .card .v small {
+        font-weight: 900;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .cardCopyRow {
+        display: flex;
+        justify-content: stretch;
+        gap: 10px;
+        margin-top: 10px;
+        align-items: stretch;
+        flex-wrap: wrap;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 8px 10px;
+      }
+
+      .cardCopyItem {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        flex: 1 1 180px;
+        min-width: 0;
+      }
+
+      .cardCopyLabel {
+        font-size: 11px;
+        font-weight: 900;
+        color: var(--muted);
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+        line-height: 1.25;
+        white-space: normal;
+        overflow-wrap: anywhere;
+      }
+
+      .cardCopyItem + .cardCopyItem {
+        border-left: 1px solid rgba(255, 255, 255, 0.14);
+        padding-left: 10px;
+        margin-left: 0;
+      }
+
+      .srOnly {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .muted {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .chartStack {
+        display: grid;
+        gap: 16px;
+      }
+
+      .chartSection {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: linear-gradient(145deg, #111523, #0f1320);
+        border-radius: 14px;
+        padding: 12px;
+        box-shadow: var(--shadow);
+      }
+
+      .sectionHead {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+
+      .chartWrap {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: #0e111c;
+        border-radius: 16px;
+        padding: 14px;
+      }
+
+      .chartGrid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 12px;
+      }
+
+      .chartWrap h3 {
+        margin: 0 0 8px;
+        font-size: 14px;
+        font-weight: 900;
+        color: var(--muted);
+        letter-spacing: 0.2px;
+      }
+
+      .chartSection .cards {
+        margin-bottom: 8px;
+      }
+
+      canvas {
+        width: 100% !important;
+        height: 320px !important;
+        border-radius: 12px;
+      }
+
+      .badge {
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.06);
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-weight: 900;
+        color: var(--text);
+      }
+
+      @media (max-width: 880px) {
+        .cards {
+          grid-template-columns: 1fr;
+        }
+        canvas {
+          height: 260px !important;
+        }
+      }
+
+      /* Make the exported PDF look extra bold */
+      .pdfMode * {
+        font-weight: 900 !important;
+      }
+      .pdfMode h1 {
+        font-weight: 950 !important;
+      }
+      .pdfMode .subtitle {
+        font-weight: 900 !important;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="wrap">
+      <div class="top">
+        <div class="controls">
+          <div class="pill">
+            <label for="indoorInput">Indoor qm</label>
+            <input
+              id="indoorInput"
+              inputmode="numeric"
+              type="text"
+              placeholder="z. B. 150"
+            />
+          </div>
+          <div class="pill">
+            <label for="outdoorInput">Outdoor qm</label>
+            <input
+              id="outdoorInput"
+              inputmode="numeric"
+              type="text"
+              placeholder="z. B. 300"
+            />
+          </div>
+          <div class="pill">
+            <label for="discountInput">Rabatt %</label>
+            <input
+              id="discountInput"
+              inputmode="decimal"
+              type="text"
+              placeholder="z. B. 30"
+              style="width: 100px; border-color: rgba(108, 251, 255, 0.4);"
+            />
+          </div>
+          <button id="exportBtn" class="btn" type="button">PDF Export</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div id="exportArea">
+          <div class="title" style="margin-bottom: 24px; padding-top: 16px">
+            <h1 style="padding: 0">Preisübersicht</h1>
+            <div class="logo">
+              <svg
+                width="30"
+                height="30"
+                viewBox="0 0 878 878"
+                style="overflow: visible"
+              >
+                <g transform="translate(-2192, -380)">
+                  <g transform="matrix(2.05 0 0 2.05 -635 -904)">
+                    <g transform="translate(0, -23)">
+                      <path
+                        d="M1722.7,655.082C1769.49,655.082 1807.47,693.227 1807.47,740.208C1807.47,787.188 1769.49,825.332 1722.7,825.332C1675.9,825.332 1637.92,787.188 1637.92,740.208C1637.92,693.227 1675.9,655.082 1722.7,655.082ZM1722.7,716.975C1709.92,716.975 1699.55,727.384 1699.55,740.208C1699.55,753.031 1709.92,763.439 1722.7,763.439C1735.47,763.439 1745.85,753.031 1745.85,740.208C1745.85,727.384 1735.47,716.975 1722.7,716.975Z"
+                        fill="white"
+                      />
+                      <path
+                        d="M1520.73,1020.42C1508.27,1001.38 1411.61,824.171 1387.87,778.418C1375.08,753.745 1378.01,725.269 1390.65,701.905C1403.31,678.518 1425.68,660.222 1451.85,656.003C1474.28,652.387 1499.46,659.155 1523.67,681.806C1540.08,697.154 1558.2,734.058 1580.73,771.48C1603.5,809.307 1630.71,847.635 1664.89,865.353C1694.91,880.918 1731.4,877.714 1741.72,876.396C1735.45,890.424 1703.94,959.277 1664.2,1017.44C1645.72,1044.49 1617.34,1070.17 1585.77,1068.33C1564.75,1067.11 1542.45,1053.61 1520.73,1020.42Z"
+                        fill="white"
+                      />
+                    </g>
+                  </g>
+                </g>
+              </svg>
+            </div>
+          </div>
+          <div class="summary">
+            <div class="summaryTable">
+              <div class="summaryRow highlight">
+                <div class="summaryLabel">
+                  <div class="k">Gesamtsumme</div>
+                  <div class="muted">Alle Positionen</div>
+                </div>
+                <div class="summaryValue">
+                  <span id="grandTotalValue" class="valueText">0,00</span>
+                  <small>€</small>
+                </div>
+                <button
+                  class="copyBtn"
+                  data-copy="#grandTotalValue"
+                  aria-label="Kopieren Gesamtsumme"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-copy-icon lucide-copy"
+                  >
+                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                    <path
+                      d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <!-- Rabatt-Indikator (nur sichtbar wenn Rabatt aktiv) -->
+              <div class="summaryRow" id="discountRow" style="display:none; background: rgba(108,251,255,0.06); border-color: rgba(108,251,255,0.3);">
+                <div class="summaryLabel">
+                  <div class="k" style="color: var(--accent2);">Rabatt aktiv</div>
+                  <div class="muted">Originalpreis vor Rabatt</div>
+                </div>
+                <div class="summaryValue" style="color: var(--accent2);">
+                  <span id="discountBadgeLabel" class="valueText" style="font-size:14px;">–</span>
+                </div>
+                <div></div>
+              </div>
+              <div class="summaryRow highlight">
+                <div class="summaryLabel">
+                  <div class="k">Gesamter Datenerfassung-QM-Preis</div>
+                  <div class="muted">Datenerfassung Ø €/qm bei <span id="setupTotalAreaValue">0</span> qm Gesamtfläche</div>
+                </div>
+                <div class="summaryValue">
+                  <span id="setupQmPriceValue" class="valueText">0,00</span>
+                  <small>€/qm</small>
+                </div>
+                <button
+                  class="copyBtn"
+                  data-copy="#setupQmPriceValue"
+                  aria-label="Kopieren Gesamten Datenerfassung-QM-Preis"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-copy-icon lucide-copy"
+                  >
+                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                    <path
+                      d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div class="summaryRow breakdown">
+                <div class="summaryLabel">
+                  <div class="k">Datenerfassung</div>
+                  <div class="muted">Gesamtsumme Datenerfassung</div>
+                </div>
+                <div class="summaryValue">
+                  <span id="datenerfassungValue" class="valueText">0,00</span>
+                  <small>€</small>
+                </div>
+                <button
+                  class="copyBtn"
+                  data-copy="#datenerfassungValue"
+                  aria-label="Kopieren Datenerfassung"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-copy-icon lucide-copy"
+                  >
+                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                    <path
+                      d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div class="summaryRow breakdown">
+                <div class="summaryLabel">
+                  <div class="k">Rundgangserstellung</div>
+                  <div class="muted">Gesamtsumme Rundgangserstellung</div>
+                </div>
+                <div class="summaryValue">
+                  <span id="setupValue" class="valueText">0,00</span>
+                  <small>€</small>
+                </div>
+                <button
+                  class="copyBtn"
+                  data-copy="#setupValue"
+                  aria-label="Kopieren Rundgangserstellung"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-copy-icon lucide-copy"
+                  >
+                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                    <path
+                      d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div class="summaryRow">
+                <div class="summaryLabel">
+                  <div class="k">Indoor gesamt</div>
+                  <div class="muted">Indoor Summe</div>
+                </div>
+                <div class="summaryValue">
+                  <span data-summary="indoor" class="valueText">0,00</span>
+                  <small>€</small>
+                </div>
+                <button
+                  class="copyBtn"
+                  data-copy='[data-summary="indoor"]'
+                  aria-label="Kopieren Indoor"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-copy-icon lucide-copy"
+                  >
+                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                    <path
+                      d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div class="summaryRow">
+                <div class="summaryLabel">
+                  <div class="k">Outdoor gesamt</div>
+                  <div class="muted">Outdoor Summe</div>
+                </div>
+                <div class="summaryValue">
+                  <span data-summary="outdoor" class="valueText">0,00</span>
+                  <small>€</small>
+                </div>
+                <button
+                  class="copyBtn"
+                  data-copy='[data-summary="outdoor"]'
+                  aria-label="Kopieren Outdoor"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-copy-icon lucide-copy"
+                  >
+                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                    <path
+                      d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div class="summaryRow">
+                <div class="summaryLabel">
+                  <div class="k">Hosting Indoor</div>
+                  <div class="muted">Anteil Indoor</div>
+                </div>
+                <div class="summaryValue">
+                  <span id="hostingIndoorSummary" class="valueText">0,00</span>
+                  <small>€</small>
+                </div>
+                <button
+                  class="copyBtn"
+                  data-copy="#hostingIndoorSummary"
+                  aria-label="Kopieren Hosting Indoor"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-copy-icon lucide-copy"
+                  >
+                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                    <path
+                      d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div class="summaryRow">
+                <div class="summaryLabel">
+                  <div class="k">Hosting Outdoor</div>
+                  <div class="muted">Anteil Outdoor</div>
+                </div>
+                <div class="summaryValue">
+                  <span id="hostingOutdoorSummary" class="valueText">0,00</span>
+                  <small>€</small>
+                </div>
+                <button
+                  class="copyBtn"
+                  data-copy="#hostingOutdoorSummary"
+                  aria-label="Kopieren Hosting Outdoor"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-copy-icon lucide-copy"
+                  >
+                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                    <path
+                      d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div class="summaryRow hosting-highlight">
+                <div class="summaryLabel">
+                  <div class="k">Hosting gesamt</div>
+                  <div class="muted">Auto aus Indoor + Outdoor/4</div>
+                </div>
+                <div class="summaryValue">
+                  <span data-summary="hosting" class="valueText">0,00</span>
+                  <small>€/Monat</small>
+                </div>
+                <button
+                  class="copyBtn"
+                  data-copy='[data-summary="hosting"]'
+                  aria-label="Kopieren Hosting"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-copy-icon lucide-copy"
+                  >
+                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                    <path
+                      d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="chartStack">
+            <div class="chartSection" id="indoorSection">
+              <div class="sectionHead">
+                <h2>Indoor</h2>
+              </div>
+              <div class="cards">
+                <div class="card">
+                  <div class="k">Eingegebene Fläche</div>
+                  <div class="v">
+                    <span id="indoorQmValue">–</span> <small>qm</small>
+                  </div>
+                </div>
+	                <div class="card">
+	                  <div class="k">Preis pro qm</div>
+	                  <div class="v">
+	                    <span id="indoorPriceValue">–</span> <small>€/qm</small>
+	                  </div>
+	                  <span id="indoorDatenerfassungPrice" class="srOnly">0,00</span>
+	                  <span id="indoorSetupPrice" class="srOnly">0,00</span>
+	                  <div class="cardCopyRow">
+	                    <div class="cardCopyItem">
+	                      <div class="cardCopyLabel">Datenerfassung (€/qm)</div>
+	                      <button
+	                        class="copyBtn"
+	                        data-copy="#indoorDatenerfassungPrice"
+	                        aria-label="Kopieren Datenerfassung (€/qm)"
+	                        title="Datenerfassung (€/qm) kopieren"
+	                      >
+	                        <svg
+	                          xmlns="http://www.w3.org/2000/svg"
+	                          width="24"
+	                          height="24"
+	                          viewBox="0 0 24 24"
+	                          fill="none"
+	                          stroke="currentColor"
+	                          stroke-width="2"
+	                          stroke-linecap="round"
+	                          stroke-linejoin="round"
+	                          class="lucide lucide-copy-icon lucide-copy"
+	                        >
+	                          <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+	                          <path
+	                            d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+	                          />
+	                        </svg>
+	                      </button>
+	                    </div>
+	                    <div class="cardCopyItem">
+	                      <div class="cardCopyLabel">Rundgangserstellung (€/qm)</div>
+	                      <button
+	                        class="copyBtn"
+	                        data-copy="#indoorSetupPrice"
+	                        aria-label="Kopieren Rundgangserstellung (€/qm)"
+	                        title="Rundgangserstellung (€/qm) kopieren"
+	                      >
+	                        <svg
+	                          xmlns="http://www.w3.org/2000/svg"
+	                          width="24"
+	                          height="24"
+	                          viewBox="0 0 24 24"
+	                          fill="none"
+	                          stroke="currentColor"
+	                          stroke-width="2"
+	                          stroke-linecap="round"
+	                          stroke-linejoin="round"
+	                          class="lucide lucide-copy-icon lucide-copy"
+	                        >
+	                          <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+	                          <path
+	                            d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+	                          />
+	                        </svg>
+	                      </button>
+	                    </div>
+	                  </div>
+	                </div>
+                <div class="card">
+                  <div class="k">Gesamt Indoor</div>
+                  <div class="v">
+                    <span id="indoorTotalValue">0,00</span> <small>€</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="chartWrap">
+                <canvas id="indoorChart"></canvas>
+              </div>
+            </div>
+
+            <div class="chartSection" id="outdoorSection">
+              <div class="sectionHead">
+                <h2>Outdoor</h2>
+              </div>
+              <div class="cards">
+                <div class="card">
+                  <div class="k">Eingegebene Fläche</div>
+                  <div class="v">
+                    <span id="outdoorQmValue">–</span> <small>qm</small>
+                  </div>
+                </div>
+	                <div class="card">
+	                  <div class="k">Preis pro qm</div>
+	                  <div class="v">
+	                    <span id="outdoorPriceValue">–</span> <small>€/qm</small>
+	                  </div>
+	                  <span id="outdoorDatenerfassungPrice" class="srOnly">0,00</span>
+	                  <span id="outdoorSetupPrice" class="srOnly">0,00</span>
+	                  <div class="cardCopyRow">
+	                    <div class="cardCopyItem">
+	                      <div class="cardCopyLabel">Datenerfassung (€/qm)</div>
+	                      <button
+	                        class="copyBtn"
+	                        data-copy="#outdoorDatenerfassungPrice"
+	                        aria-label="Kopieren Datenerfassung Outdoor (€/qm)"
+	                        title="Datenerfassung Outdoor (€/qm) kopieren"
+	                      >
+	                        <svg
+	                          xmlns="http://www.w3.org/2000/svg"
+	                          width="24"
+	                          height="24"
+	                          viewBox="0 0 24 24"
+	                          fill="none"
+	                          stroke="currentColor"
+	                          stroke-width="2"
+	                          stroke-linecap="round"
+	                          stroke-linejoin="round"
+	                          class="lucide lucide-copy-icon lucide-copy"
+	                        >
+	                          <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+	                          <path
+	                            d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+	                          />
+	                        </svg>
+	                      </button>
+	                    </div>
+	                    <div class="cardCopyItem">
+	                      <div class="cardCopyLabel">Rundgangserstellung (€/qm)</div>
+	                      <button
+	                        class="copyBtn"
+	                        data-copy="#outdoorSetupPrice"
+	                        aria-label="Kopieren Rundgangserstellung Outdoor (€/qm)"
+	                        title="Rundgangserstellung Outdoor (€/qm) kopieren"
+	                      >
+	                        <svg
+	                          xmlns="http://www.w3.org/2000/svg"
+	                          width="24"
+	                          height="24"
+	                          viewBox="0 0 24 24"
+	                          fill="none"
+	                          stroke="currentColor"
+	                          stroke-width="2"
+	                          stroke-linecap="round"
+	                          stroke-linejoin="round"
+	                          class="lucide lucide-copy-icon lucide-copy"
+	                        >
+	                          <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+	                          <path
+	                            d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"
+	                          />
+	                        </svg>
+	                      </button>
+	                    </div>
+	                  </div>
+	                </div>
+                <div class="card">
+                  <div class="k">Gesamt Outdoor</div>
+                  <div class="v">
+                    <span id="outdoorTotalValue">0,00</span> <small>€</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="chartWrap">
+                <canvas id="outdoorChart"></canvas>
+              </div>
+            </div>
+
+            <div class="chartSection" id="hostingSection">
+              <div class="sectionHead">
+                <h2>Hosting</h2>
+              </div>
+              <div class="cards">
+                <div class="card">
+                  <div class="k">Gesamtfläche</div>
+                  <div class="v">
+                    <span id="hostingQmValue">–</span> <small>qm</small>
+                  </div>
+                </div>
+                <div class="card">
+                  <div class="k">Gesamt Hosting</div>
+                  <div class="v">
+                    <span id="hostingTotalValue">0,00</span>
+                    <small>€/Monat</small>
+                  </div>
+                </div>
+                <div class="card">
+                  <div class="k">Hosting Indoor</div>
+                  <div class="v">
+                    <span id="hostingIndoorValue">0,00</span> <small>€</small>
+                  </div>
+                </div>
+                <div class="card">
+                  <div class="k">Hosting Outdoor</div>
+                  <div class="v">
+                    <span id="hostingOutdoorValue">0,00</span> <small>€</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="chartGrid">
+                <div class="chartWrap">
+                  <h3>Hosting Indoor (€/Monat)</h3>
+                  <canvas id="hostingIndoorChart"></canvas>
+                </div>
+                <div class="chartWrap">
+                  <h3>Hosting Outdoor (€/qm, Outdoor/4)</h3>
+                  <canvas id="hostingOutdoorChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========= RATENRECHNER ========= -->
+      <div class="panel" style="margin-top:16px;">
+        <div style="padding:20px 20px 24px; background:#0b0d12; border-radius:18px;">
+          <h2 style="margin-bottom:18px; font-size:20px;">Ratenrechner</h2>
+
+          <!-- Eingabe-Zeile -->
+          <div style="display:flex; flex-wrap:wrap; gap:14px; margin-bottom:20px; align-items:flex-end;">
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="font-weight:900; font-size:12px; color:var(--muted); letter-spacing:0.4px; text-transform:uppercase;">Endbetrag Netto (€)</label>
+              <input
+                id="rateNettoInput"
+                inputmode="decimal"
+                type="text"
+                placeholder="z. B. 1.000,00"
+                style="width:160px; border:1px solid rgba(255,255,255,0.14); background:rgba(0,0,0,0.28); color:var(--text); border-radius:999px; padding:10px 14px; font-weight:900; font-size:14px; outline:none; font-family:inherit;"
+              />
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="font-weight:900; font-size:12px; color:var(--muted); letter-spacing:0.4px; text-transform:uppercase;">Endbetrag Brutto (€)</label>
+              <input
+                id="rateBruttoInput"
+                inputmode="decimal"
+                type="text"
+                placeholder="z. B. 1.190,00"
+                style="width:160px; border:1px solid rgba(255,255,255,0.14); background:rgba(0,0,0,0.28); color:var(--text); border-radius:999px; padding:10px 14px; font-weight:900; font-size:14px; outline:none; font-family:inherit;"
+              />
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="font-weight:900; font-size:12px; color:rgba(0,122,255,0.9); letter-spacing:0.4px; text-transform:uppercase;">Hosting abziehen (€/Monat)</label>
+              <input
+                id="rateHostingInput"
+                inputmode="decimal"
+                type="text"
+                placeholder="z. B. 29,90"
+                style="width:160px; border:1px solid rgba(0,122,255,0.35); background:rgba(0,122,255,0.07); color:var(--text); border-radius:999px; padding:10px 14px; font-weight:900; font-size:14px; outline:none; font-family:inherit;"
+              />
+            </div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <label style="font-weight:900; font-size:12px; color:var(--muted); letter-spacing:0.4px; text-transform:uppercase;">Anzahl Raten</label>
+              <select
+                id="rateCountSelect"
+                style="width:110px; border:1px solid rgba(255,255,255,0.14); background:rgba(0,0,0,0.28); color:var(--text); border-radius:999px; padding:10px 14px; font-weight:900; font-size:14px; outline:none; font-family:inherit; cursor:pointer; appearance:none; -webkit-appearance:none; background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\"); background-repeat:no-repeat; background-position:calc(100% - 12px) center; padding-right:30px;"
+              >
+                <option value="2">2 Raten</option>
+                <option value="3">3 Raten</option>
+                <option value="4">4 Raten</option>
+                <option value="5">5 Raten</option>
+                <option value="6">6 Raten</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Raten-Tabelle (via JS befüllt) -->
+          <div id="ratenList" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ---- Anker & Konfiguration (hier editieren) ----
+      // ---- Hosting anchor sets (edit independently) ----
+      // Hosting Indoor: Monatskosten in € (stückweise linear, keine Überschwinger)
+      // Vorgaben:
+      // - 150 qm  -> 19,91 €
+      // - 450 qm  -> 28,35 €
+      // - 1000 qm -> 39,11 €
+      // - danach +5 € pro 1000 qm
+      const HOSTING_INDOOR_COST_ANCHORS = [
+        { qm: 0, price: 0 },
+        { qm: 150, price: 19.91 },
+        { qm: 450, price: 28.35 },
+        { qm: 1000, price: 39.11 },
+        { qm: 20000, price: 39.11 + (20000 - 1000) * (7.5 / 1000) }, // 134.11 €
+      ];
+
+      const HOSTING_OUTDOOR_ANCHORS = [
+        { qm: 0, price: 0.18 },
+        { qm: 40, price: 0.1763 },
+        { qm: 125, price: 0.0683 },
+        { qm: 250, price: 0.0443 },
+        { qm: 1000, price: 0.0141 },
+        { qm: 5000, price: 0.0096 },
+        { qm: 20000, price: 0.0055 },
+      ];
+
+      const HOSTING_LIMITS = {
+        indoorMin: 15.99,
+        indoorMax: 100,
+        outdoorMin: 5.2,
+        outdoorMax: 19.9,
+        totalCap: 100,
+      };
+
+      const HOSTING_COLORS = {
+        indoor: {
+          line: "rgba(129, 74, 200, 0.9)",
+          point: "rgba(129, 74, 200, 0.95)",
+          fillStart: "rgba(129, 74, 200, 0.24)",
+          fillEnd: "rgba(129, 74, 200, 0.04)",
+        },
+        outdoor: {
+          line: "rgba(129, 74, 200, 0.92)",
+          point: "rgba(129, 74, 200, 0.9)",
+          fillStart: "rgba(129, 74, 200, 0.25)",
+          fillEnd: "rgba(129, 74, 200, 0.05)",
+        },
+      };
+
+      const CALCULATOR_CONFIGS = [
+        {
+          key: "indoor",
+          label: "Indoor",
+          unitLabel: "qm",
+          priceUnitLabel: "€/qm",
+          anchors: [
+            { qm: 0, price: 6.94 },
+            { qm: 1000, price: 4.94 },
+            { qm: 10000, price: 1.64 },
+            { qm: 30000, price: 0.99 },
+          ],
+          floorPrice: 0.99,
+          color: {
+            line: "rgba(129, 74, 200, 0.92)",
+            point: "rgba(129, 74, 200, 0.92)",
+            fillStart: "rgba(129, 74, 200, 0.32)",
+            fillEnd: "rgba(129, 74, 200, 0.05)",
+          },
+        },
+        {
+          key: "outdoor",
+          label: "Outdoor",
+          unitLabel: "qm",
+          priceUnitLabel: "€/qm",
+          anchors: [
+            { qm: 0, price: 1.4 },
+            { qm: 15000, price: 0.5 },
+            { qm: 30000, price: 0.18 },
+          ],
+          floorPrice: 0.25,
+          color: {
+            line: "rgba(129, 74, 200, 0.92)",
+            point: "rgba(129, 74, 200, 0.9)",
+            fillStart: "rgba(129, 74, 200, 0.25)",
+            fillEnd: "rgba(129, 74, 200, 0.05)",
+          },
+        },
+      ];
+
+      const nf = new Intl.NumberFormat("de-DE");
+      const pf = new Intl.NumberFormat("de-DE", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+
+      const indoorInputEl = document.getElementById("indoorInput");
+      const outdoorInputEl = document.getElementById("outdoorInput");
+      const discountInputEl = document.getElementById("discountInput");
+
+      function getDiscountFactor() {
+        const raw = discountInputEl?.value ?? "";
+        const cleaned = typeof raw === "string" ? raw.replace(",", ".") : raw;
+        const pct = parseFloat(cleaned);
+        if (!Number.isFinite(pct) || pct <= 0) return 1;
+        const clamped = Math.min(Math.max(pct, 0), 100);
+        return 1 - clamped / 100;
+      }
+
+      const totals = {};
+      const calculators = {};
+      const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+      const tooltipBg = "rgba(8, 10, 16, 0.92)";
+
+      // Monotone cubic Hermite helper (smooths but keeps anchors)
+      function computeSlopes(points) {
+        const n = points.length;
+        const m = new Array(n).fill(0);
+        const d = new Array(n - 1);
+        for (let i = 0; i < n - 1; i++) {
+          const dx = points[i + 1].qm - points[i].qm;
+          d[i] = (points[i + 1].price - points[i].price) / dx;
+        }
+        m[0] = d[0];
+        m[n - 1] = d[n - 2];
+        for (let i = 1; i < n - 1; i++) {
+          m[i] = (d[i - 1] + d[i]) / 2;
+        }
+        for (let i = 0; i < n - 1; i++) {
+          if (d[i] === 0) {
+            m[i] = 0;
+            m[i + 1] = 0;
+          } else {
+            const a = m[i] / d[i];
+            const b = m[i + 1] / d[i];
+            const s = a * a + b * b;
+            if (s > 9) {
+              const t = 3 / Math.sqrt(s);
+              m[i] = t * a * d[i];
+              m[i + 1] = t * b * d[i];
+            }
+          }
+        }
+        return m;
+      }
+
+      function priceFactory(config) {
+        const anchors = [...config.anchors].sort((a, b) => a.qm - b.qm);
+        const floor =
+          config.floorPrice ?? Math.min(...anchors.map((a) => a.price));
+        const isLinear = config.curve === "linear";
+        const slopes = isLinear ? null : computeSlopes(anchors);
+
+        return (qm) => {
+          const q = clamp(qm, anchors[0].qm, anchors[anchors.length - 1].qm);
+
+          if (q <= anchors[0].qm) return Math.max(floor, anchors[0].price);
+
+          for (let i = 0; i < anchors.length - 1; i++) {
+            const a = anchors[i];
+            const b = anchors[i + 1];
+            if (q <= b.qm) {
+              const h = b.qm - a.qm;
+              const t = (q - a.qm) / h;
+
+              if (isLinear) {
+                const y = a.price + t * (b.price - a.price);
+                return Math.max(floor, y);
+              }
+
+              const h00 = (1 + 2 * t) * (1 - t) * (1 - t);
+              const h10 = t * (1 - t) * (1 - t);
+              const h01 = t * t * (3 - 2 * t);
+              const h11 = t * t * (t - 1);
+              const y =
+                h00 * a.price +
+                h10 * h * slopes[i] +
+                h01 * b.price +
+                h11 * h * slopes[i + 1];
+              return Math.max(floor, y);
+            }
+          }
+
+          return Math.max(floor, anchors[anchors.length - 1].price);
+        };
+      }
+
+      const hostingIndoorCostFn = priceFactory({
+        anchors: HOSTING_INDOOR_COST_ANCHORS,
+        floorPrice: 0,
+        curve: "linear",
+      });
+
+      const hostingOutdoorPriceFn = priceFactory({
+        anchors: HOSTING_OUTDOOR_ANCHORS,
+        floorPrice: 0.0055,
+        curve: "linear",
+      });
+
+      function computeHostingPricing(indoorArea, outdoorArea) {
+        const outdoorEff = outdoorArea / 4;
+        const totalArea = indoorArea + outdoorEff;
+
+        const outdoorPrice =
+          outdoorEff > 0 ? hostingOutdoorPriceFn(outdoorEff) : 0;
+
+        const indoorCostRaw =
+          indoorArea > 0 ? hostingIndoorCostFn(indoorArea) : 0;
+        const outdoorCostRaw = outdoorEff * outdoorPrice;
+
+        const indoorCost =
+          indoorArea > 0
+            ? clamp(
+                indoorCostRaw,
+                HOSTING_LIMITS.indoorMin,
+                HOSTING_LIMITS.indoorMax
+              )
+            : 0;
+        const outdoorCost =
+          outdoorEff > 0
+            ? clamp(
+                outdoorCostRaw,
+                HOSTING_LIMITS.outdoorMin,
+                HOSTING_LIMITS.outdoorMax
+              )
+            : 0;
+
+        const combined = indoorCost + outdoorCost;
+        const cappedTotal = Math.min(combined, HOSTING_LIMITS.totalCap);
+        const scale = combined > 0 ? cappedTotal / combined : 0;
+
+        const indoorPart = indoorCost * scale;
+        const outdoorPart = outdoorCost * scale;
+        const blendedPrice = totalArea > 0 ? cappedTotal / totalArea : 0;
+
+        return {
+          totalArea,
+          outdoorEff,
+          indoorChartValue: indoorCost,
+          outdoorChartValue: outdoorPrice,
+          indoorPart,
+          outdoorPart,
+          blendedPrice,
+          total: cappedTotal,
+        };
+      }
+
+      function validateNonDecreasingIndoorHosting() {
+        const maxQm = Math.max(...HOSTING_INDOOR_COST_ANCHORS.map((a) => a.qm));
+        let prev = -Infinity;
+        for (let qm = 0; qm <= maxQm; qm += 25) {
+          const cost = computeHostingPricing(qm, 0).indoorPart;
+          if (cost + 1e-9 < prev) {
+            console.warn(
+              "[pricing] Hosting Indoor is non-monotonic:",
+              "qm=",
+              qm,
+              "cost=",
+              cost,
+              "< prev=",
+              prev
+            );
+            return;
+          }
+          prev = cost;
+        }
+      }
+
+      function validateHostingIndoorAnchorValues() {
+        const cases = [
+          { qm: 150, expected: 19.91 },
+          { qm: 450, expected: 28.35 },
+          { qm: 1000, expected: 39.11 },
+          { qm: 2000, expected: 44.11 },
+          { qm: 5000, expected: 59.11 },
+          { qm: 10000, expected: 84.11 },
+          { qm: 13000, expected: 99.11 },
+        ];
+
+        const eps = 0.01;
+        for (const { qm, expected } of cases) {
+          const got = computeHostingPricing(qm, 0).indoorPart;
+          if (Math.abs(got - expected) > eps) {
+            console.warn(
+              "[pricing] Hosting Indoor anchor mismatch:",
+              "qm=",
+              qm,
+              "expected=",
+              expected,
+              "got=",
+              got
+            );
+          }
+        }
+      }
+
+      function buildCurve(config, priceFn, points = 200) {
+        const anchors = [...config.anchors].sort((a, b) => a.qm - b.qm);
+        const minQm = anchors[0].qm;
+        const maxQm = anchors[anchors.length - 1].qm;
+        const arr = [];
+        for (let i = 0; i < points; i++) {
+          const t = i / (points - 1);
+          const qm = Math.round(minQm + t * (maxQm - minQm));
+          arr.push({ x: qm, y: priceFn(qm) });
+        }
+        return arr;
+      }
+
+      function anchorBadgeText(config) {
+        const anchors = [...config.anchors].sort((a, b) => a.qm - b.qm);
+        return anchors
+          .map(
+            (a) =>
+              `${nf.format(a.qm)} → ${pf.format(a.price)} ${
+                config.priceUnitLabel
+              }`
+          )
+          .join(" • ");
+      }
+
+      function updateGrandTotal() {
+        const rawTotal = (totals.indoor || 0) + (totals.outdoor || 0);
+        const df = getDiscountFactor();
+        const total = rawTotal * df;
+
+        document.getElementById("grandTotalValue").textContent =
+          pf.format(total);
+
+        const datenerfassung = total * 0.4;
+        const setup = total * 0.6;
+
+        const datenerfassungEl = document.getElementById("datenerfassungValue");
+        if (datenerfassungEl)
+          datenerfassungEl.textContent = pf.format(datenerfassung);
+
+        const setupEl = document.getElementById("setupValue");
+        if (setupEl) setupEl.textContent = pf.format(setup);
+
+        const indoorAreaRaw = parseFloat(
+          String(indoorInputEl?.value || "").replace(",", ".")
+        );
+        const outdoorAreaRaw = parseFloat(
+          String(outdoorInputEl?.value || "").replace(",", ".")
+        );
+        const indoorArea = Number.isFinite(indoorAreaRaw) ? indoorAreaRaw : 0;
+        const outdoorArea = Number.isFinite(outdoorAreaRaw) ? outdoorAreaRaw : 0;
+        const totalArea = indoorArea + outdoorArea;
+
+        const indoorDatenerfassungQmPrice = calculators.indoor?.priceFn
+          ? calculators.indoor.priceFn(indoorArea) * 0.6 * df
+          : 0;
+        const outdoorDatenerfassungQmPrice = calculators.outdoor?.priceFn
+          ? calculators.outdoor.priceFn(outdoorArea) * 0.6 * df
+          : 0;
+
+        const totalDatenerfassungQmPrice =
+          totalArea > 0
+            ?
+              (indoorDatenerfassungQmPrice * indoorArea +
+                outdoorDatenerfassungQmPrice * outdoorArea) /
+              totalArea
+            : 0;
+
+        const setupQmPriceEl = document.getElementById("setupQmPriceValue");
+        if (setupQmPriceEl)
+          setupQmPriceEl.textContent = pf.format(totalDatenerfassungQmPrice);
+
+        const setupTotalAreaEl = document.getElementById("setupTotalAreaValue");
+        if (setupTotalAreaEl)
+          setupTotalAreaEl.textContent = nf.format(totalArea);
+
+        // Rabatt-Indikator aktualisieren
+        const discountRow = document.getElementById("discountRow");
+        const discountBadgeLabel = document.getElementById("discountBadgeLabel");
+        const rawPct = discountInputEl?.value?.replace(",", ".") ?? "";
+        const pct = parseFloat(rawPct);
+        if (discountRow && discountBadgeLabel) {
+          if (Number.isFinite(pct) && pct > 0 && rawTotal > 0) {
+            discountRow.style.display = "";
+            const saving = rawTotal - total;
+            discountBadgeLabel.textContent = `${nf.format(Math.round(pct))}% – Ersparnis ${pf.format(saving)} € (Originalpreis ${pf.format(rawTotal)} €)`;
+          } else {
+            discountRow.style.display = "none";
+          }
+        }
+      }
+
+      function initCalculator(config) {
+        totals[config.key] = 0;
+
+        const priceFn = priceFactory(config);
+        const curveData = buildCurve(config, priceFn, 200);
+
+        const canvas = document.getElementById(`${config.key}Chart`);
+        const ctx = canvas.getContext("2d");
+
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, config.color.fillStart);
+        gradient.addColorStop(1, config.color.fillEnd);
+
+        const maxPrice = Math.max(
+          ...config.anchors.map((a) => a.price),
+          config.floorPrice || 0
+        );
+        const yMax = maxPrice * 1.2;
+        const xLabel =
+          config.unitLabel === "qm" ? "Fläche (qm)" : config.unitLabel;
+
+        const chart = new Chart(ctx, {
+          type: "line",
+          data: {
+            datasets: [
+              {
+                label: `${config.label} Preis`,
+                data: curveData,
+                parsing: false,
+                borderWidth: 4,
+                pointRadius: 0,
+                tension: 0.25,
+                borderColor: config.color.line,
+                backgroundColor: gradient,
+                fill: true,
+              },
+              {
+                label: "Dein Wert",
+                data: [],
+                parsing: false,
+                showLine: false,
+                pointRadius: 8,
+                pointHoverRadius: 8,
+                borderWidth: 0,
+                backgroundColor: config.color.point,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: "nearest", intersect: false },
+            plugins: {
+              legend: {
+                labels: {
+                  color: "rgba(243,246,255,0.9)",
+                  font: { weight: "900" },
+                },
+              },
+              tooltip: {
+                backgroundColor: tooltipBg,
+                titleColor: "#fff",
+                bodyColor: "#fff",
+                borderColor: "rgba(255,255,255,0.14)",
+                borderWidth: 1,
+                titleFont: { weight: "900" },
+                bodyFont: { weight: "900" },
+                padding: 12,
+                displayColors: false,
+                callbacks: {
+                  title: (items) =>
+                    config.unitLabel === "qm"
+                      ? `${nf.format(items[0].parsed.x)} qm`
+                      : nf.format(items[0].parsed.x),
+                  label: (item) =>
+                    `Preis: ${pf.format(item.parsed.y)} ${
+                      config.priceUnitLabel
+                    }`,
+                },
+              },
+            },
+            scales: {
+              x: {
+                type: "linear",
+                min: config.anchors[0].qm,
+                max: config.anchors[config.anchors.length - 1].qm,
+                grid: { color: "rgba(255,255,255,0.08)" },
+                ticks: {
+                  color: "rgba(243,246,255,0.72)",
+                  font: { weight: "900" },
+                  callback: (v) =>
+                    config.unitLabel === "qm"
+                      ? `${nf.format(v)} qm`
+                      : nf.format(v),
+                },
+                title: {
+                  display: true,
+                  text: xLabel,
+                  color: "rgba(243,246,255,0.85)",
+                  font: { weight: "900" },
+                },
+              },
+              y: {
+                min: config.floorPrice ?? 0,
+                suggestedMax: yMax,
+                grid: { color: "rgba(255,255,255,0.08)" },
+                ticks: {
+                  color: "rgba(243,246,255,0.72)",
+                  font: { weight: "900" },
+                  callback: (v) => `${pf.format(v)} ${config.priceUnitLabel}`,
+                },
+                title: {
+                  display: true,
+                  text: `Preis (${config.priceUnitLabel})`,
+                  color: "rgba(243,246,255,0.85)",
+                  font: { weight: "900" },
+                },
+              },
+            },
+          },
+        });
+
+        const input = document.getElementById(`${config.key}Input`);
+        const values = {
+          qm: document.getElementById(`${config.key}QmValue`),
+          price: document.getElementById(`${config.key}PriceValue`),
+          total: document.getElementById(`${config.key}TotalValue`),
+          summary: document.querySelector(`[data-summary="${config.key}"]`),
+        };
+        const priceSplit = {
+          datenerfassungPrice: document.getElementById(
+            `${config.key}DatenerfassungPrice`
+          ),
+          setupPrice: document.getElementById(`${config.key}SetupPrice`),
+        };
+
+        const badgeEl = document.getElementById(`${config.key}Badge`);
+        if (badgeEl) badgeEl.textContent = anchorBadgeText(config);
+
+        const minQm = config.anchors[0].qm;
+        const maxQm = config.anchors[config.anchors.length - 1].qm;
+
+        const setEmpty = () => {
+          if (input) input.value = "";
+          values.qm.textContent = "–";
+          if (values.price) values.price.textContent = "–";
+          values.total.textContent = pf.format(0);
+          if (values.summary) values.summary.textContent = pf.format(0);
+          chart.data.datasets[1].data = [];
+          chart.update("none");
+          totals[config.key] = 0;
+          if (config.key === "indoor" || config.key === "outdoor") {
+            if (priceSplit.datenerfassungPrice)
+              priceSplit.datenerfassungPrice.textContent = pf.format(0);
+            if (priceSplit.setupPrice)
+              priceSplit.setupPrice.textContent = pf.format(0);
+          }
+          updateGrandTotal();
+        };
+
+        const setSelected = (qmRaw, opts = {}) => {
+          const cleaned =
+            typeof qmRaw === "string" ? qmRaw.replace(",", ".") : qmRaw;
+          const parsed = parseFloat(cleaned);
+
+          if (!Number.isFinite(parsed)) {
+            setEmpty();
+            return;
+          }
+
+          const qm = clamp(Math.round(parsed), minQm, maxQm);
+
+          const priceRaw = priceFn(qm);
+          const totalRaw = qm * priceRaw;
+          const df = getDiscountFactor();
+          const price = priceRaw * df;
+          const finalTotal = totalRaw * df;
+
+          if (input) input.value = String(qm);
+          values.qm.textContent = nf.format(qm);
+          if (values.price) values.price.textContent = pf.format(price);
+          values.total.textContent = pf.format(finalTotal);
+          if (values.summary)
+            values.summary.textContent = pf.format(finalTotal);
+
+          chart.data.datasets[1].data = [{ x: qm, y: priceRaw }];
+          chart.update("none");
+
+          totals[config.key] = totalRaw; // immer roh speichern, Rabatt in updateGrandTotal
+          if (config.key === "indoor" || config.key === "outdoor") {
+            const datenerfassungPrice = price * 0.4;
+            const setupPrice = price * 0.6;
+            if (priceSplit.datenerfassungPrice)
+              priceSplit.datenerfassungPrice.textContent =
+                pf.format(datenerfassungPrice);
+            if (priceSplit.setupPrice)
+              priceSplit.setupPrice.textContent = pf.format(setupPrice);
+          }
+          updateGrandTotal();
+        };
+
+        if (input) {
+          input.addEventListener("input", (e) => setSelected(e.target.value));
+          input.addEventListener("blur", (e) => setSelected(e.target.value));
+        }
+
+        setEmpty();
+
+        calculators[config.key] = {
+          setSelected,
+          setEmpty,
+          input,
+          priceFn,
+          config,
+          chart,
+        };
+      }
+
+      CALCULATOR_CONFIGS.forEach((config) => initCalculator(config));
+
+      function initHostingChart(canvasId, anchors, color, label, options = {}) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return null;
+
+        const ctx = canvas.getContext("2d");
+        const {
+          xLabel = "Fläche (qm)",
+          priceUnitLabel = "€/qm",
+          floorPrice = 0.0055,
+          curve = "linear",
+          valueFn = null,
+          tooltipValueLabel = "Preis",
+        } = options;
+        const config = {
+          anchors,
+          unitLabel: "qm",
+          priceUnitLabel,
+          floorPrice,
+        };
+        const resolvedValueFn =
+          typeof valueFn === "function"
+            ? valueFn
+            : priceFactory({
+                anchors,
+                floorPrice,
+                curve,
+              });
+        const curveData = buildCurve(config, resolvedValueFn, 200);
+
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, color.fillStart);
+        gradient.addColorStop(1, color.fillEnd);
+
+        const maxValue = Math.max(
+          ...curveData.map((p) => p.y),
+          config.floorPrice || 0
+        );
+        const yMax = maxValue * 1.2;
+
+        const chart = new Chart(ctx, {
+          type: "line",
+          data: {
+            datasets: [
+              {
+                label: `${label} ${tooltipValueLabel}`,
+                data: curveData,
+                parsing: false,
+                borderWidth: 4,
+                pointRadius: 0,
+                tension: 0.25,
+                borderColor: color.line,
+                backgroundColor: gradient,
+                fill: true,
+              },
+              {
+                label: "Dein Wert",
+                data: [],
+                parsing: false,
+                showLine: false,
+                pointRadius: 8,
+                pointHoverRadius: 8,
+                borderWidth: 0,
+                backgroundColor: color.point,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: "nearest", intersect: false },
+            plugins: {
+              legend: {
+                labels: {
+                  color: "rgba(243,246,255,0.9)",
+                  font: { weight: "900" },
+                },
+              },
+              tooltip: {
+                backgroundColor: tooltipBg,
+                titleColor: "#fff",
+                bodyColor: "#fff",
+                borderColor: "rgba(255,255,255,0.14)",
+                borderWidth: 1,
+                titleFont: { weight: "900" },
+                bodyFont: { weight: "900" },
+                padding: 12,
+                displayColors: false,
+                callbacks: {
+                  title: (items) => `${nf.format(items[0].parsed.x)} qm`,
+                  label: (item) =>
+                    `${tooltipValueLabel}: ${pf.format(item.parsed.y)} ${
+                      config.priceUnitLabel
+                    }`,
+                },
+              },
+            },
+            scales: {
+              x: {
+                type: "linear",
+                min: anchors[0].qm,
+                max: anchors[anchors.length - 1].qm,
+                grid: { color: "rgba(255,255,255,0.08)" },
+                ticks: {
+                  color: "rgba(243,246,255,0.72)",
+                  font: { weight: "900" },
+                  callback: (v) => `${nf.format(v)} qm`,
+                },
+                title: {
+                  display: true,
+                  text: xLabel,
+                  color: "rgba(243,246,255,0.85)",
+                  font: { weight: "900" },
+                },
+              },
+              y: {
+                min: config.floorPrice ?? 0,
+                suggestedMax: yMax,
+                grid: { color: "rgba(255,255,255,0.08)" },
+                ticks: {
+                  color: "rgba(243,246,255,0.72)",
+                  font: { weight: "900" },
+                  callback: (v) => `${pf.format(v)} ${config.priceUnitLabel}`,
+                },
+                title: {
+                  display: true,
+                  text: `${tooltipValueLabel} (${config.priceUnitLabel})`,
+                  color: "rgba(243,246,255,0.85)",
+                  font: { weight: "900" },
+                },
+              },
+            },
+          },
+        });
+
+        return { chart, valueFn: resolvedValueFn };
+      }
+
+      const hostingCharts = {
+        indoor: initHostingChart(
+          "hostingIndoorChart",
+          HOSTING_INDOOR_COST_ANCHORS,
+          HOSTING_COLORS.indoor,
+          "Hosting Indoor",
+          {
+            priceUnitLabel: "€/Monat",
+            floorPrice: 0,
+            tooltipValueLabel: "Kosten",
+            valueFn: (qm) =>
+              qm > 0
+                ? clamp(
+                    hostingIndoorCostFn(qm),
+                    HOSTING_LIMITS.indoorMin,
+                    HOSTING_LIMITS.indoorMax
+                  )
+                : 0,
+          }
+        ),
+        outdoor: initHostingChart(
+          "hostingOutdoorChart",
+          HOSTING_OUTDOOR_ANCHORS,
+          HOSTING_COLORS.outdoor,
+          "Hosting Outdoor",
+          { xLabel: "Eff. Fläche (qm)" }
+        ),
+      };
+
+      function updateHostingUI(pricing, indoorArea, outdoorArea) {
+        const totalAreaEl = document.getElementById("hostingQmValue");
+        const totalValueEl = document.getElementById("hostingTotalValue");
+        const indoorValueEl = document.getElementById("hostingIndoorValue");
+        const outdoorValueEl = document.getElementById("hostingOutdoorValue");
+        const hostingSummaryEl = document.querySelector(
+          '[data-summary="hosting"]'
+        );
+        const indoorSummaryEl = document.getElementById("hostingIndoorSummary");
+        const outdoorSummaryEl = document.getElementById(
+          "hostingOutdoorSummary"
+        );
+
+        const indoorChart = hostingCharts.indoor?.chart;
+        const outdoorChart = hostingCharts.outdoor?.chart;
+
+        if (!pricing.totalArea) {
+          if (totalAreaEl) totalAreaEl.textContent = "–";
+          if (totalValueEl) totalValueEl.textContent = pf.format(0);
+          if (indoorValueEl) indoorValueEl.textContent = pf.format(0);
+          if (outdoorValueEl) outdoorValueEl.textContent = pf.format(0);
+          if (hostingSummaryEl) hostingSummaryEl.textContent = pf.format(0);
+          if (indoorSummaryEl) indoorSummaryEl.textContent = pf.format(0);
+          if (outdoorSummaryEl) outdoorSummaryEl.textContent = pf.format(0);
+
+          if (indoorChart) {
+            indoorChart.data.datasets[1].data = [];
+            indoorChart.update("none");
+          }
+          if (outdoorChart) {
+            outdoorChart.data.datasets[1].data = [];
+            outdoorChart.update("none");
+          }
+          return;
+        }
+
+        if (totalAreaEl) totalAreaEl.textContent = nf.format(pricing.totalArea);
+        if (totalValueEl) totalValueEl.textContent = pf.format(pricing.total);
+        if (hostingSummaryEl)
+          hostingSummaryEl.textContent = pf.format(pricing.total);
+
+        if (indoorValueEl)
+          indoorValueEl.textContent = pf.format(pricing.indoorPart);
+        if (outdoorValueEl)
+          outdoorValueEl.textContent = pf.format(pricing.outdoorPart);
+        if (indoorSummaryEl)
+          indoorSummaryEl.textContent = pf.format(pricing.indoorPart);
+        if (outdoorSummaryEl)
+          outdoorSummaryEl.textContent = pf.format(pricing.outdoorPart);
+
+        if (indoorChart) {
+          indoorChart.data.datasets[1].data =
+            indoorArea > 0
+              ? [{ x: indoorArea, y: pricing.indoorChartValue }]
+              : [];
+          indoorChart.update("none");
+        }
+
+        if (outdoorChart) {
+          const outdoorEff = pricing.outdoorEff ?? outdoorArea / 4;
+          outdoorChart.data.datasets[1].data =
+            outdoorArea > 0
+              ? [{ x: outdoorEff, y: pricing.outdoorChartValue }]
+              : [];
+          outdoorChart.update("none");
+        }
+      }
+
+      function updateHostingFromAreas() {
+        const toNum = (raw) => {
+          if (raw === "" || raw === null || raw === undefined) return 0;
+          const cleaned = typeof raw === "string" ? raw.replace(",", ".") : raw;
+          const n = parseFloat(cleaned);
+          return Number.isFinite(n) ? n : 0;
+        };
+
+        const indoorArea = toNum(indoorInputEl.value);
+        const outdoorArea = toNum(outdoorInputEl.value);
+
+        const pricing = computeHostingPricing(indoorArea, outdoorArea);
+
+        updateHostingUI(pricing, indoorArea, outdoorArea);
+      }
+
+      indoorInputEl.addEventListener("input", updateHostingFromAreas);
+      indoorInputEl.addEventListener("blur", updateHostingFromAreas);
+      outdoorInputEl.addEventListener("input", updateHostingFromAreas);
+      outdoorInputEl.addEventListener("blur", updateHostingFromAreas);
+
+      validateHostingIndoorAnchorValues();
+      validateNonDecreasingIndoorHosting();
+      updateHostingFromAreas();
+
+      // Rabatt-Input: bei Änderung alle aktiven Rechner neu berechnen
+      if (discountInputEl) {
+        const retriggerAll = () => {
+          Object.values(calculators).forEach(({ input, setSelected, setEmpty }) => {
+            if (input && input.value !== "") {
+              setSelected(input.value);
+            } else {
+              updateGrandTotal();
+            }
+          });
+        };
+        discountInputEl.addEventListener("input", retriggerAll);
+        discountInputEl.addEventListener("blur", retriggerAll);
+      }
+
+      // Copy buttons
+      function setupCopyButtons() {
+        const copy = async (text) => {
+          try {
+            await navigator.clipboard.writeText(text);
+          } catch (err) {
+            console.warn("Clipboard failed", err);
+          }
+        };
+
+        document.querySelectorAll("[data-copy]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const targetSel = btn.getAttribute("data-copy");
+            const target = targetSel ? document.querySelector(targetSel) : null;
+            if (target) {
+              copy(target.textContent.trim());
+              showToast();
+            }
+          });
+        });
+      }
+
+      setupCopyButtons();
+
+      // Toast
+      const toastEl = document.createElement("div");
+      toastEl.className = "toast";
+      toastEl.textContent = "Kopiert";
+      document.body.appendChild(toastEl);
+
+      function showToast() {
+        toastEl.classList.add("show");
+        setTimeout(() => toastEl.classList.remove("show"), 1600);
+      }
+
+      // ---- PDF Export ----
+      const exportBtn = document.getElementById("exportBtn");
+      const exportArea = document.getElementById("exportArea");
+      exportBtn.addEventListener("click", async () => {
+        const userFileName = prompt("Dateiname (ohne .pdf):", "preisübersicht");
+        if (userFileName === null) return;
+        const safeName =
+          userFileName.trim() === "" ? "pricing_overview" : userFileName.trim();
+
+        exportArea.classList.add("pdfMode");
+        await new Promise((r) => setTimeout(r, 50));
+
+        const exportScale = Math.min(2.5, (window.devicePixelRatio || 1) * 1.5);
+        const canvas = await html2canvas(exportArea, {
+          scale: exportScale,
+          backgroundColor: "#0b0d12",
+          useCORS: true,
+          imageSmoothingEnabled: true,
+          imageSmoothingQuality: "high",
+        });
+
+        const imgData = canvas.toDataURL("image/jpeg", 0.9);
+
+        const { jsPDF } = window.jspdf;
+        const pxToPt = (px) => (px * 72) / 96;
+        const pageW = pxToPt(canvas.width);
+        const pageH = pxToPt(canvas.height);
+
+        const pdf = new jsPDF({
+          orientation: pageW >= pageH ? "landscape" : "portrait",
+          unit: "pt",
+          format: [pageW, pageH],
+        });
+
+        pdf.addImage(imgData, "JPEG", 0, 0, pageW, pageH, undefined, "MEDIUM");
+        pdf.save(`${safeName}.pdf`);
+
+        exportArea.classList.remove("pdfMode");
+      });
+
+      // ==========================================
+      // RATENRECHNER
+      // ==========================================
+      (function () {
+        const VAT = 0.19;
+        const rateNettoEl   = document.getElementById("rateNettoInput");
+        const rateBruttoEl  = document.getElementById("rateBruttoInput");
+        const rateHostingEl = document.getElementById("rateHostingInput");
+        const rateCountEl   = document.getElementById("rateCountSelect");
+        const ratenListEl   = document.getElementById("ratenList");
+
+        // Parse German / English decimal input
+        function parseAmount(raw) {
+          if (!raw) return 0;
+          const cleaned = String(raw).trim().replace(/\./g, "").replace(",", ".");
+          const n = parseFloat(cleaned);
+          return Number.isFinite(n) && n > 0 ? n : 0;
+        }
+
+        function fmt(n) {
+          return new Intl.NumberFormat("de-DE", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }).format(n);
+        }
+
+        // Cent-accurate installments – last rate always ≤ others
+        function computeInstallments(totalBrutto, n) {
+          const totalCents = Math.round(totalBrutto * 100);
+          const baseCents  = Math.floor(totalCents / n);
+          const lastCents  = totalCents - baseCents * (n - 1);
+          return Array.from({ length: n }, (_, i) => {
+            const bc     = i === n - 1 ? lastCents : baseCents;
+            const brutto = bc / 100;                                          // € (e.g. 900.00)
+            const netto  = Math.round((brutto / (1 + VAT)) * 100) / 100;    // € from euros, not cents
+            const mwst   = Math.round((brutto - netto) * 100) / 100;
+            return { brutto, netto, mwst };
+          });
+        }
+
+        function renderRaten(totalBruttoRaw) {
+          const hosting      = parseAmount(rateHostingEl.value);
+          const totalBrutto  = Math.max(0, Math.round((totalBruttoRaw - hosting) * 100) / 100);
+
+          if (!(totalBruttoRaw > 0)) {
+            ratenListEl.style.display = "none";
+            return;
+          }
+
+          const n     = parseInt(rateCountEl.value, 10);
+          const rates = computeInstallments(totalBrutto, n);
+          const lastIsSmaller = rates[n - 1].brutto < rates[0].brutto;
+
+          // Hosting-Info-Zeile
+          const hostingHint = hosting > 0
+            ? `<div style="display:flex; align-items:center; gap:8px; margin-bottom:12px; padding:8px 12px; border-radius:10px; background:rgba(0,122,255,0.08); border:1px solid rgba(0,122,255,0.25); font-size:12px; font-weight:900; color:rgba(0,122,255,0.9);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                Hosting (${fmt(hosting)} €/Monat) abgezogen → Ratenbasis: ${fmt(totalBrutto)} € brutto
+              </div>`
+            : "";
+
+          let html = hostingHint + `<div class="summaryTable">
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; padding:8px 12px; background:rgba(0,0,0,0.4); border-bottom:1px solid rgba(255,255,255,0.08);">
+                <div style="font-weight:900;font-size:11px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;">Rate</div>
+                <div style="font-weight:900;font-size:11px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;text-align:right;">Netto</div>
+                <div style="font-weight:900;font-size:11px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;text-align:right;">MwSt 19%</div>
+                <div style="font-weight:900;font-size:11px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;text-align:right;">Brutto</div>
+              </div>`;
+
+          rates.forEach((r, i) => {
+            const isLast   = i === n - 1;
+            const rowStyle = isLast && lastIsSmaller
+              ? "background:rgba(108,251,255,0.05); border-color:rgba(108,251,255,0.18);"
+              : "";
+            html += `
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; padding:10px 12px; align-items:center; border-bottom:1px solid rgba(255,255,255,0.07); ${rowStyle}">
+                <div style="font-weight:900; font-size:13px;">
+                  Rate ${i + 1}${isLast && n > 1 ? `<span style="font-size:10px;color:var(--muted);margin-left:5px;font-weight:700;">${lastIsSmaller ? "↓ niedriger" : "= gleich"}</span>` : ""}
+                </div>
+                <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;">
+                  <span style="font-weight:900;font-size:14px;">${fmt(r.netto)} <small style="color:var(--muted);font-size:11px;">€</small></span>
+                  <button onclick="rateCopy(this,'${fmt(r.netto)}')" title="Kopieren" style="flex-shrink:0;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:var(--muted);border-radius:6px;padding:3px 5px;cursor:pointer;line-height:0;transition:all .15s;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                  </button>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;">
+                  <span style="font-weight:900;font-size:14px;">${fmt(r.mwst)} <small style="color:var(--muted);font-size:11px;">€</small></span>
+                  <button onclick="rateCopy(this,'${fmt(r.mwst)}')" title="Kopieren" style="flex-shrink:0;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:var(--muted);border-radius:6px;padding:3px 5px;cursor:pointer;line-height:0;transition:all .15s;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                  </button>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;">
+                  <span style="font-weight:900;font-size:14px;">${fmt(r.brutto)} <small style="color:var(--muted);font-size:11px;">€</small></span>
+                  <button onclick="rateCopy(this,'${fmt(r.brutto)}')" title="Kopieren" style="flex-shrink:0;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:var(--muted);border-radius:6px;padding:3px 5px;cursor:pointer;line-height:0;transition:all .15s;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                  </button>
+                </div>
+              </div>`;
+          });
+
+          const totNetto  = rates.reduce((s, r) => s + r.netto,  0);
+          const totMwst   = rates.reduce((s, r) => s + r.mwst,   0);
+          const totBrutto = rates.reduce((s, r) => s + r.brutto, 0);
+
+          html += `
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; padding:10px 12px; align-items:center; background:rgba(129,74,200,0.1); border-top:1px solid rgba(129,74,200,0.3);">
+                <div style="font-weight:900;font-size:13px;color:var(--accent2);">Gesamt</div>
+                <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;">
+                  <span style="font-weight:900;font-size:14px;">${fmt(totNetto)} <small style="color:var(--muted);font-size:11px;">€</small></span>
+                  <button onclick="rateCopy(this,'${fmt(totNetto)}')" title="Kopieren" style="flex-shrink:0;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:var(--muted);border-radius:6px;padding:3px 5px;cursor:pointer;line-height:0;transition:all .15s;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                  </button>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;">
+                  <span style="font-weight:900;font-size:14px;">${fmt(totMwst)} <small style="color:var(--muted);font-size:11px;">€</small></span>
+                  <button onclick="rateCopy(this,'${fmt(totMwst)}')" title="Kopieren" style="flex-shrink:0;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:var(--muted);border-radius:6px;padding:3px 5px;cursor:pointer;line-height:0;transition:all .15s;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                  </button>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;">
+                  <span style="font-weight:900;font-size:14px;color:var(--accent2);">${fmt(totBrutto)} <small style="color:var(--muted);font-size:11px;">€</small></span>
+                  <button onclick="rateCopy(this,'${fmt(totBrutto)}')" title="Kopieren" style="flex-shrink:0;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:var(--muted);border-radius:6px;padding:3px 5px;cursor:pointer;line-height:0;transition:all .15s;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>`;
+
+          ratenListEl.innerHTML = html;
+          ratenListEl.style.display = "";
+        }
+
+        // Helper: get current brutto from whichever field was last used
+        function getCurrentBrutto() {
+          return parseAmount(rateBruttoEl.value);
+        }
+
+        // ---- Netto-Eingabe ----
+        rateNettoEl.addEventListener("input", () => {
+          const netto  = parseAmount(rateNettoEl.value);
+          if (netto > 0) {
+            const brutto = Math.round(netto * (1 + VAT) * 100) / 100;
+            rateBruttoEl.value = fmt(brutto);
+            renderRaten(brutto);
+          } else {
+            rateBruttoEl.value = "";
+            ratenListEl.style.display = "none";
+          }
+        });
+
+        rateNettoEl.addEventListener("focus", () => {
+          rateBruttoEl.value = "";
+          ratenListEl.style.display = "none";
+        });
+
+        // ---- Brutto-Eingabe ----
+        rateBruttoEl.addEventListener("focus", () => {
+          rateNettoEl.value = "";
+          ratenListEl.style.display = "none";
+        });
+
+        rateBruttoEl.addEventListener("input", () => {
+          const brutto = parseAmount(rateBruttoEl.value);
+          if (brutto > 0) {
+            const netto = Math.round(brutto / (1 + VAT) * 100) / 100;
+            rateNettoEl.value = fmt(netto);
+            renderRaten(brutto);
+          } else {
+            rateNettoEl.value = "";
+            ratenListEl.style.display = "none";
+          }
+        });
+
+        // ---- Hosting-Eingabe: sofort neu rendern ----
+        rateHostingEl.addEventListener("input", () => {
+          const brutto = getCurrentBrutto();
+          if (brutto > 0) renderRaten(brutto);
+        });
+
+        // ---- Ratenanzahl ----
+        rateCountEl.addEventListener("change", () => {
+          const brutto = getCurrentBrutto();
+          if (brutto > 0) renderRaten(brutto);
+        });
+
+        // Focus styling
+        [rateNettoEl, rateBruttoEl].forEach((el) => {
+          el.addEventListener("focus", () => {
+            el.style.borderColor = "rgba(129,74,200,0.6)";
+            el.style.boxShadow   = "0 0 0 4px rgba(129,74,200,0.12)";
+          });
+          el.addEventListener("blur", () => {
+            el.style.borderColor = "rgba(255,255,255,0.14)";
+            el.style.boxShadow   = "none";
+          });
+        });
+
+        rateHostingEl.addEventListener("focus", () => {
+          rateHostingEl.style.borderColor = "rgba(0,122,255,0.7)";
+          rateHostingEl.style.boxShadow   = "0 0 0 4px rgba(0,122,255,0.15)";
+        });
+        rateHostingEl.addEventListener("blur", () => {
+          rateHostingEl.style.borderColor = "rgba(0,122,255,0.35)";
+          rateHostingEl.style.boxShadow   = "none";
+        });
+      })();
+
+      // Copy helper for Ratenrechner buttons
+      function rateCopy(btn, value) {
+        navigator.clipboard.writeText(value).then(() => {
+          const orig = btn.innerHTML;
+          btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+          btn.style.borderColor = "rgba(108,251,255,0.5)";
+          btn.style.color       = "rgb(108,251,255)";
+          btn.style.background  = "rgba(108,251,255,0.1)";
+          setTimeout(() => {
+            btn.innerHTML        = orig;
+            btn.style.borderColor = "";
+            btn.style.color       = "";
+            btn.style.background  = "";
+          }, 1400);
+        });
+      }
+    </script>
+  </body>
+</html>
